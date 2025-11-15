@@ -1,14 +1,14 @@
 Running experiments for n = 4...
-Average time for n=4: 0.0000038 seconds
+Average time for n=4: 0.0000020 seconds
 
 Running experiments for n = 5...
-Average time for n=5: 0.0000042 seconds
+Average time for n=5: 0.0000038 seconds
 
 Running experiments for n = 6...
-Average time for n=6: 0.0000060 seconds
+Average time for n=6: 0.0000072 seconds
 
 Running experiments for n = 7...
-Average time for n=7: 0.0000078 seconds
+Average time for n=7: 0.0000121 seconds
 
 Running experiments for n = 8...
-Average time for n=8: 0.0000122 seconds
+Average time for n=8: 0.0000447 seconds
