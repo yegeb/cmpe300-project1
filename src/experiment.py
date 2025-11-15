@@ -1,8 +1,8 @@
 import time
 import matplotlib.pyplot as plt
 import random
-from graph_construction import generate_tricky_graph  # adjust name if needed
-from solution import hamiltonian_naive, hamiltonian_optimized
+from src.graph_construction import generate_tricky_graph  # adjust name if needed
+from src.solution import hamiltonian_naive, hamiltonian_optimized
 
 random.seed(31)
 
