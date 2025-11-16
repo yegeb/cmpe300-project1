@@ -113,7 +113,23 @@ def hamiltonian_optimized(graph: List[List[int]], start: int, end: int) -> bool:
     return all_permutations(H, s, t)
 
 
+
 def compress_graph(adj, cluster_nodes):
+    """
+    This function takes the original full adjacency matrix `adj` and the list 
+    of vertices `cluster_nodes` found by DFS, and builds a smaller adjacency 
+    matrix that contains ONLY the vertices inside this cluster.
+
+    Why we need it:
+      - The bitmask DP requires vertices to be labeled from 0 to n-1.
+      - `cluster_nodes` contains arbitrary original labels (e.g., [7, 12, 3]).
+      - We must remap:  original_label → compressed_label.
+      - Then we create an n×n adjacency matrix for the cluster.
+
+    Output:
+      comp_adj : compressed adjacency matrix of the cluster
+      idx      : dictionary mapping original node → compressed index
+    """
     # map original node → 0..n-1
     idx = {node: i for i, node in enumerate(cluster_nodes)}
     n = len(cluster_nodes)
@@ -129,6 +145,31 @@ def compress_graph(adj, cluster_nodes):
 
 
 def hamiltonian_path_bitmask_cluster(adj, start, end, cluster_nodes):
+    """
+    This function finds a Hamiltonian path from 'start' to 'end', but ONLY inside 
+    the connected component given by `cluster_nodes`.
+
+    Algorithm steps:
+      1. Compress the graph:
+         - Convert cluster nodes to 0..n-1 indexing
+         - Extract the adjacency matrix of only the cluster
+
+      2. Dynamic Programming (Held–Karp style):
+         - dp[mask][v] = True if there is a path using exactly the nodes in `mask`
+                         and ending at vertex `v`.
+         - mask is a bitmask representing which nodes have been visited.
+
+      3. Transition:
+         - From dp[mask][v], try to extend to a neighbor `u`
+         - Skip u if:
+             (a) it is not adjacent to v   <-- BASIC OPERATION
+             (b) it is already in mask
+             (c) u is the end node but it's not the last step
+       4. Final check:
+         - If dp[(1<<n)-1][end] is True, a Hamiltonian path exists.
+
+       5. Reconstruct the path by backtracking through the DP table.
+    """
     # Step 1: compress graph to local (0..n-1)
     comp_adj, idx = compress_graph(adj, cluster_nodes)
     n = len(cluster_nodes)
@@ -192,3 +233,4 @@ def hamiltonian_path_bitmask_cluster(adj, start, end, cluster_nodes):
                 break
 
     return path[::-1]
+
