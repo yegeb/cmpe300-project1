@@ -4,7 +4,7 @@ import random
 from graph_construction import generate_tricky_graph
 from solution import hamiltonian_optimized, hamiltonian_naive, hamiltonian_bonus
 
-random.seed(31)
+random.seed(28)
 
 def measure_runtime(func, n, rounds=10):
     """
@@ -26,13 +26,13 @@ def measure_runtime(func, n, rounds=10):
 
 
 def main():
-    ns = [4, 5, 6, 7, 8, 9]   # ≥ 4, at least 5 different values
+    ns = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15]   # ≥ 4, at least 5 different values
     avg_times = []
 
     for n in ns:
         print(f"\nRunning experiments for n = {n}...")
 
-        avg_time = measure_runtime(hamiltonian_naive, n, rounds=10)
+        avg_time = measure_runtime(hamiltonian_bonus, n, rounds=20)
         avg_times.append(avg_time)
 
         print(f"Average time for n={n}: {avg_time:.7f} seconds")

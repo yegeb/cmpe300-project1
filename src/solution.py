@@ -116,25 +116,12 @@ def hamiltonian_optimized(graph: List[List[int]], start: int, end: int) -> bool:
 
 def compress_graph(adj, cluster_nodes):
     """
-    This function takes the original full adjacency matrix `adj` and the list 
-    of vertices `cluster_nodes` found by DFS, and builds a smaller adjacency 
-    matrix that contains ONLY the vertices inside this cluster.
-
-    Why we need it:
-      - The bitmask DP requires vertices to be labeled from 0 to n-1.
-      - `cluster_nodes` contains arbitrary original labels (e.g., [7, 12, 3]).
-      - We must remap:  original_label → compressed_label.
-      - Then we create an n×n adjacency matrix for the cluster.
-
-    Output:
-      comp_adj : compressed adjacency matrix of the cluster
-      idx      : dictionary mapping original node → compressed index
+    Build a compact adjacency matrix for the induced subgraph on cluster_nodes.
+    Returns (compressed_adj_matrix, index_map).
     """
-    # map original node → 0..n-1
     idx = {node: i for i, node in enumerate(cluster_nodes)}
     n = len(cluster_nodes)
 
-    # compressed adjacency
     comp_adj = [[0]*n for _ in range(n)]
     for i in range(n):
         for j in range(n):
@@ -144,93 +131,55 @@ def compress_graph(adj, cluster_nodes):
     return comp_adj, idx
 
 
-def hamiltonian_path_bitmask_cluster(adj, start, end, cluster_nodes):
+def hamiltonian_bonus(graph, start, end):
     """
-    This function finds a Hamiltonian path from 'start' to 'end', but ONLY inside 
-    the connected component given by `cluster_nodes`.
-
-    Algorithm steps:
-      1. Compress the graph:
-         - Convert cluster nodes to 0..n-1 indexing
-         - Extract the adjacency matrix of only the cluster
-
-      2. Dynamic Programming (Held–Karp style):
-         - dp[mask][v] = True if there is a path using exactly the nodes in `mask`
-                         and ending at vertex `v`.
-         - mask is a bitmask representing which nodes have been visited.
-
-      3. Transition:
-         - From dp[mask][v], try to extend to a neighbor `u`
-         - Skip u if:
-             (a) it is not adjacent to v   <-- BASIC OPERATION
-             (b) it is already in mask
-             (c) u is the end node but it's not the last step
-       4. Final check:
-         - If dp[(1<<n)-1][end] is True, a Hamiltonian path exists.
-
-       5. Reconstruct the path by backtracking through the DP table.
+    Return True if a Hamiltonian* path exists from start to end using bitmask DP,
+    searching only inside the connected component of start; otherwise return False.
     """
-    # Step 1: compress graph to local (0..n-1)
-    comp_adj, idx = compress_graph(adj, cluster_nodes)
+    # Extract connected component containing `start`
+    cluster_nodes = dfs(graph, start)
+
+    # If end is not reachable from start, no Hamiltonian* path is possible
+    if end not in cluster_nodes:
+        return False
+
+    # Compress graph to 0..n-1 indexing
+    comp_adj, idx = compress_graph(graph, cluster_nodes)
     n = len(cluster_nodes)
 
     start_l = idx[start]
-    end_l   = idx[end]
+    end_l = idx[end]
 
-    # dp[mask][v] = whether we can reach v using nodes in mask
+    # dp[mask][v] = path uses exactly vertices in mask and ends at v
     dp = [[False]*n for _ in range(1 << n)]
     dp[1 << start_l][start_l] = True
 
-    # Fill DP
+    # Fill DP table
     for mask in range(1 << n):
-        if not (mask & (1 << start_l)): 
-            continue  # path must include start
+        if not (mask & (1 << start_l)):  # must include start
+            continue
 
         for v in range(n):
             if not dp[mask][v]:
                 continue
 
-            # Try extending to neighbors
             for u in range(n):
-                if not comp_adj[v][u]:
+                if not comp_adj[v][u]:   # no edge
                     continue
-                if mask & (1 << u):
-                    continue  # already used
+                if mask & (1 << u):      # already visited
+                    continue
 
-                # Cannot visit end unless this is the last step
                 next_mask = mask | (1 << u)
+
+                # End can only be visited last
                 if u == end_l and next_mask != (1 << n) - 1:
                     continue
 
                 dp[next_mask][u] = True
 
+    # Full mask means all nodes in cluster visited exactly once
     full_mask = (1 << n) - 1
 
-    # Check if solution exists
-    if not dp[full_mask][end_l]:
-        return None
-
-    # Reconstruct path
-    path = []
-    mask = full_mask
-    cur = end_l
-
-    for _ in range(n):
-        path.append(cluster_nodes[cur])  # convert back to original numbers
-        prev_mask = mask ^ (1 << cur)
-
-        if prev_mask == 0:
-            break
-
-        # find predecessor
-        for u in range(n):
-            if dp[prev_mask][u] and comp_adj[u][cur]:
-                # end must be last
-                if u == end_l and prev_mask != (1 << end_l):
-                    continue
-                cur = u
-                mask = prev_mask
-                break
-
-    return path[::-1]
+    # Check whether Hamiltonian path exists
+    return dp[full_mask][end_l]
 
