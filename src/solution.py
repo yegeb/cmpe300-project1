@@ -133,8 +133,9 @@ def compress_graph(adj, cluster_nodes):
 
 def hamiltonian_bonus(graph, start, end):
     """
-    Return True if a Hamiltonian* path exists from start to end using bitmask DP,
-    searching only inside the connected component of start; otherwise return False.
+    Check if a Hamiltonian* path exists from start to end using bitmask DP,
+    where dp[mask][v] tracks whether a path visiting vertices in 'mask'
+    ends at vertex v inside the connected component of start.
     """
     # Extract connected component containing `start`
     cluster_nodes = dfs(graph, start)
